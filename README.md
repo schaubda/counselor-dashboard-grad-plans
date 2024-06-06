@@ -1,1 +1,1 @@
-# counselor-dashboard-grad-plans
+# Counselor Dashboard Grad Plans
