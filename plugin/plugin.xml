@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://plugin.powerschool.pearson.com"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        description="Adds the historic grad plan portlet back onto the Counselor Dashboard."
+        name="Counselor Dashboard Grad Plans"
+        version="24.1.0.42"
+        xsi:schemaLocation="http://plugin.powerschool.pearson.com plugin.xsd">
+    <publisher name="Traverse City Area Public Schools">
+        <contact email="schaubda@tcaps.net"/>
+    </publisher>
+    <autoinstall required="true">
+        <autoenable required="true"/>
+        <autoredeploy/>
+    </autoinstall>
+</plugin>

@@ -1,0 +1,109 @@
+<!-- TCAPS Grad Progress start -->
+<style>
+    #hist_grad_plan_portlet
+    {
+        clear:      both;
+        width:      98%;
+        margin:     5px 5px 5px 5px;
+        text-align: center;
+    }
+
+    #adv_grad_plan_portlet
+    {
+        clear:      both;
+        width:      98%;
+        margin:     5px 5px 5px 5px;
+        text-align: center;
+    }
+
+    iframe
+    {
+        border:    none;
+        width:     1px;
+        min-width: 100%;
+    }
+
+    .column
+    {
+        padding-bottom: 10px !important;
+    }
+</style>
+
+<script type="text/javascript" src="/scripts/iframeheight.min.js"></script>
+
+<div class="hidden" id="hist_grad_plan">
+    <div class="portlet" id="hist_grad_plan_portlet">
+        <div class="portlet-header">Graduation Plan Progress</div>
+        <div class="portlet-content">
+            <iframe src="cd4_historic_grad_plan.html" title="Historic Graduation Plan"
+                    id="hist_grad_plan_frame"></iframe>
+        </div>
+    </div>
+</div>
+
+<div class="hidden" id="adv_grad_plan">
+    <div class="portlet" id="adv_grad_plan_portlet">
+        <div class="portlet-header">Graduation Plan Progress</div>
+        <div class="portlet-content">
+            <iframe src="cd4_grad_plan.html" title="Graduation Plan"
+                    id="adv_grad_plan_frame"></iframe>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $j(function ()
+       {
+           getPowerQueryResults('net.tcaps.counselor_dash.grad_plan.type',
+                                {"student_dcid": ~(curstudid)}).then(function (pqData)
+                                                                     {
+                                                                         displayGradPlan(pqData);
+                                                                     });
+       });
+
+    function getPowerQueryResults(endpoint, queryParams)
+    {
+        var recordsRetrieved = $j.Deferred();
+
+        $j.ajax({
+                    url:     '/ws/schema/query/' + endpoint + '?pagesize=0',
+                    type:    'post',
+                    headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+                    data:    JSON.stringify(queryParams),
+                    success: function (response)
+                             {
+                                 recordsRetrieved.resolve(response.record);
+                             }
+                });
+
+        return recordsRetrieved;
+    }
+
+    function displayGradPlan(pqData)
+    {
+        $j(pqData).each(function ()
+                        {
+                            if (this.historic_plan > 0)
+                            {
+                                $j('#rightColumn').after($j('#hist_grad_plan').contents());
+                                $j('#hist_grad_plan').remove();
+                                $j('#adv_grad_plan').remove();
+                                $j('#hist_grad_plan_frame').iframeHeight({
+                                                                             watcher:      true,
+                                                                             heightOffset: 25
+                                                                         });
+                            }
+                            else if (this.advanced_plan > 0)
+                            {
+                                $j('#rightColumn').after($j('#adv_grad_plan').contents());
+                                $j('#hist_grad_plan').remove();
+                                $j('#adv_grad_plan').remove();
+                                $j('#adv_grad_plan_frame').iframeHeight({
+                                                                            watcher:      true,
+                                                                            heightOffset: 25
+                                                                        });
+                            }
+                        });
+    }
+</script>
+<!-- TCAPS Grad Progress end -->

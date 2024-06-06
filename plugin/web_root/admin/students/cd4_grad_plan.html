@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<!-- start right frame -->
+<head>
+    <title>~[text:psx.html.admin_students_GraduationPlanner.GradPlanProgress.graduation_plan_progress] - ~(studentname)</title>
+    ~[wc:UI_js_includes]
+    ~[wc:commonscripts]
+    <link rel="stylesheet" type="text/css" href="/scripts/AcademicPlanner.css"/>
+    <link href="/images/css/screen.css" rel="stylesheet" media="screen"/>
+    <link href="/images/css/print.css" rel="stylesheet" media="print"/>
+
+    ~[get_js_texts:psx.js.scripts.commonscripts.]
+    <script type="text/javascript" src="/scripts/commonscripts.js"></script>
+    ~[wc:get_js_texts_div_popup]
+
+    <script>
+        function refreshSideBar(){
+            if (window.parent.frames["menu"]) {
+                window.parent.frames["menu"].location.reload();
+            }
+        }
+    </script>
+</head>
+
+<body
+        data-ng-controller="gradPlanProgressController"
+        data-require-path="components/gradplanner/gpprogress/index"
+        data-module-name="gradPlannerProgressModule">
+
+<input data-ng-cloak id="studentid-field" type="hidden" data-ng-model="gradPlanProgressContext.studentId" value="~(curstudid)"/>
+
+<script>
+    var modAccess = ~[if.modaccess] true [else] false [/if];
+</script>
+
+<div data-ng-cloak class="feedback-alert" data-ng-if="gradPlanProgressContext.showMissingGradeName">
+    <p>{{messages.missing_fg_warning}}</p>
+</div>
+<div data-ng-cloak class="box-round" data-ng-if="!gradPlanProgressContext.progressList || gradPlanProgressContext.progressList.length===0"/>
+<p>{{messages.no_graduation_plans_were_found_for_the_student}}</p>
+</div>
+
+<div data-ng-cloak class="box-round" ng-repeat="version in gradPlanProgressContext.progressList"/>
+<!-- Wildcard content will close this div -->
+~[wc:advanced_gp_progress_content]
+~[wc:admin_footer_css]
+</body>
+</html>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<queries>
+    <query name="net.tcaps.counselor_dash.grad_plan.type" flattened="true">
+        <summary>TCAPS Graduation Plan Type</summary>
+        <description>
+            Returns flags that indicate if a student has been assigned an advanced and/or historic graduation plan.
+        </description>
+        <args>
+            <arg name="student_dcid" column="students.dcid" required="false" description="DCID of student to select"
+                 default="0"/>
+        </args>
+        <columns>
+            <column column="students.dcid">grad_plan_types.student_dcid</column>
+            <column column="students.dcid">grad_plan_types.historic_plan</column>
+            <column column="students.dcid">grad_plan_types.advanced_plan</column>
+        </columns>
+        <sql>
+            <![CDATA[
+            SELECT
+                grad_plan_types.student_dcid,
+                grad_plan_types.historic_plan,
+                grad_plan_types.advanced_plan
+            FROM
+                (
+                    SELECT
+                        stu.dcid                    AS student_dcid,
+                        gpsp.id                     AS gpstudentplanid,
+                        nvl(gpv.isadvancedplan, -1) AS isadvancedplan
+                    FROM
+                        students                      stu
+                        LEFT OUTER JOIN gpstudentplan gpsp
+                                        ON gpsp.studentid = stu.id
+                        LEFT OUTER JOIN gpversion     gpv
+                                        ON gpsp.gpversionid = gpv.id
+                    WHERE
+                          stu.enroll_status = 0
+                      AND 1 = CASE
+                                  WHEN stu.dcid = :student_dcid
+                                      THEN 1
+                                  WHEN :student_dcid = 0
+                                      THEN 1
+                                  ELSE
+                                      0
+                        END
+                    ORDER BY
+                        stu.dcid
+                ) pivot
+                    (
+                     count(gpstudentplanid)
+                        FOR isadvancedplan IN (0 AS historic_plan, 1 AS advanced_plan)
+                        ) grad_plan_types
+            ]]>
+        </sql>
+    </query>
+</queries>

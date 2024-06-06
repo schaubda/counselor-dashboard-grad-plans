@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html>
+<!-- start right frame -->
+<head>
+    <meta name="Author" content="Jason Springel, PowerSchool">
+    <meta name="Version" content="4.51 - 10/27/2021">
+    <meta name="description" content="Fouth major release of the Counselor Dashboard, showing multiple pages of student data all on one screen">
+    <meta name="description" content="10/27/2021 - v4.51: Fix Grad Planner Loading">
+    <meta name="description" content="5/05/2021 - v4.5: Updated Grad Planner for SIS v21.4.0">
+    <meta name="description" content="2/28/2021 - v4.4: Updated All Enrollments with new columns recently added to the code page">
+    <meta name="description" content="7/29/2019 - v4.3: Updated column formatting and control">
+    <meta name="description" content="11/2/2018 - v4.2.1: Add option to be initial student screen">
+    <meta name="description" content="10/6/2018 - v4.2: Added student DOB">
+    <meta name="description" content="5/13/2018 - v4.1: Fix QuickLookup for PowerSchool 12.x">
+    <meta name="description" content="10/28/2017 - v4.0: Some UI improvements over v3, added All Enrollments, plus a version for teachers">
+
+    <title>Counselor Dashboard 4</title>
+    ~[wc:UI_js_includes]
+    ~[wc:commonscripts]
+
+    <link rel="stylesheet" type="text/css" href="/scripts/AcademicPlanner.css"/>
+    <link href="/images/css/screen.css" rel="stylesheet" media="screen">
+    <link href="/images/css/print.css" rel="stylesheet" media="print">
+
+    ~[get_js_texts:psx.js.scripts.commonscripts.]
+    <script type="text/javascript" src="/scripts/commonscripts.js"></script>
+    ~[wc:get_js_texts_div_popup]
+
+    <style>
+        .column { padding-bottom: 40px; padding-top: 10px;}
+        .columnwide { padding-bottom: 65px; padding-left: 5px; padding-top: 10px;}
+        .portlet { margin: 0 1em 1em 0; }
+        .portlet-header { margin: 0.3em; padding-top: 4px; padding-bottom: 4px; padding-left: 0.2em; }
+        .portlet-header .ui-icon { float: right; }
+        .portlet-content { padding: 0.3em; }
+        .portlet-content table { width: 98%; margin-left: 5px; margin-right: 5px; }
+        .ui-sortable-placeholder { border: 1px dotted black; visibility: visible !important; height: 50px !important; }
+        .ui-sortable-placeholder * { visibility: hidden; }
+        #quickLookup { width: 98%; margin: 5px 5px 0px 5px; text-align:center; }
+        #leftColumn { float: left; width: 49%; margin-left: 5px; }
+        #rightColumn { float: right; width: 49%; margin-right: 5px;}
+        #gradPlan { clear: both; width: 98%; margin: 5px 5px 0px 5px; text-align:center; }
+
+        .ui-jqgrid, .ui-jqgrid th, .ui-jqgrid td, .ui-jqgrid .ui-state-default, .ui-jqgrid .ui-widget-content {font-size: 10px;}
+        .portlet-content {font-size: 10px; line-height: 1.1em;}
+        .portlet-content th, td, tr {font-size: 10px}
+        a {color: rgb(47, 126, 174);}
+        .box-round {background: /*#FFF*/ ;border: 1px solid #CCC;-moz-border-radius: 8px;-webkit-border-radius: 8px;border-radius: 8px;margin: 10px 20px 10px 20px;display: table;}
+
+        /* Component containers
+        ----------------------------------*/
+        .ui-widget { font-family: Verdana,Arial,sans-serif/*{ffDefault}*/; font-size: 1.1em/*{fsDefault}*/; }
+        .ui-widget .ui-widget { font-size: 1em; }
+        .ui-widget input, .ui-widget select, .ui-widget textarea, .ui-widget button { font-family: Verdana,Arial,sans-serif/*{ffDefault}*/; font-size: 1em; }
+        .ui-widget-content { border: 1px solid #aaaaaa/*{borderColorContent}*/; background: #ffffff/*{bgColorContent}*/ 50%/*{bgContentXPos}*/ 50%/*{bgContentYPos}*/ repeat-x/*{bgContentRepeat}*/; color: #222222/*{fcContent}*/; }
+        .ui-widget-content a { color: rgb(47, 126, 174)/*{fcContent}*/; }
+        .ui-widget-header { border: 1px solid #aaaaaa/*{borderColorHeader}*/; background: #DFF0D8/*{bgColorHeader}*/ 50%/*{bgHeaderXPos}*/ 50%/*{bgHeaderYPos}*/ repeat-x/*{bgHeaderRepeat}*/; color: #000000/*{fcHeader}*/; font-weight: bold; }
+        .ui-widget-header a { color: #222222/*{fcHeader}*/; }
+
+        /* Layout helpers
+        ----------------------------------*/
+        .ui-helper-clearfix:before, .ui-helper-clearfix:after { content: ""; display: table; }
+        .ui-helper-clearfix:after { clear: both; }
+        .ui-helper-clearfix { zoom: 1; }
+
+        /* Icons
+        ----------------------------------*/
+
+        .ui-icon { display: block; text-indent: -99999px; overflow: hidden; background-repeat: no-repeat; }
+
+    </style>
+    <script>
+        $j(function() {
+            $j( ".column" ).sortable({
+                                         connectWith: ".column"
+                                     });
+
+            $j( ".portlet" ).addClass( "ui-widget ui-widget-content ui-helper-clearfix" )
+                            .find( ".portlet-header" )
+                            .addClass( "ui-widget-header" )
+                            .prepend( "<span class='ui-icon ui-icon-minusthick'></span>")
+                            .end()
+                            .find( ".portlet-content" );
+
+            $j( ".portlet-header .ui-icon" ).click(function() {
+                $j( this ).toggleClass( "ui-icon-minusthick" ).toggleClass( "ui-icon-plusthick" );
+                $j( this ).parents( ".portlet:first" ).find( ".portlet-content" ).toggle(250);
+            });
+
+            $j( ".column" ).disableSelection();
+        });
+
+    </script>
+
+</head>
+
+<body data-ng-controller="studentWaiverController"
+      data-require-path="components/gradplanner/index,components/widgets/psAutoComplete/index"
+      data-module-name="gradPlannerModule,widgets" >
+
+~[wc:admin_header_frame_css]<!-- breadcrumb start --><a href="/admin/home.html" target="_top">Start Page</a> &gt; <a href="home.html?selectstudent=nosearch" target="_top">Student Selection</a> &gt; Counselor Dashboard 4<!-- breadcrumb end -->~[wc:admin_navigation_frame_css]
+~[wc:title_student_begin_css]Counselor Dashboard 4.51~[wc:title_student_end_css]
+
+<!-- start of content and bounding box -->
+
+<!-- QUICK LOOKUP SCREEN -->
+<div class="portlet" id="quickLookup">
+    <div class="portlet-header">Quick Lookup (Current School Only)</div>
+    <div class="portlet-content">
+
+        ~[x:QuickLookupSchoolIdValidation]
+        ~[SetPostValue:psportal=admin]
+
+        ~[SetPostValue:skipDontPrintFilter=1]
+        ~[SetPostValue:att_quicklookuphide_t=~[x:GetQuickLookupHidePref]]
+
+        ~[wc:att_quicklookupmeeting]
+
+        ~[wc:att_quicklookupdaily]
+
+        ~[wc:att_quicklookupprogram]
+
+    </div>
+</div>
+
+<!-- THERE ARE 2 COLUMN DIVs TO CREATE THE TWO COLUMNS.-->
+<div class="column" id="leftColumn">
+
+    <!-- INSIDE EACH COLUMN IS ONE OR MORE 'PORTLET' DIVs. YOU CAN ADD MORE PORTLETS -->
+    <div class="portlet" id="cumInfo">
+        <div class="portlet-header">Cumulative Info</div>
+        <div class="portlet-content">
+            ~[if#secCumInfo.~(studentscreenaccess;cumulative.html)=1]
+            <table class="linkDescList">
+                <thead>
+                <tr>
+                    <th class="bold">~[text:psx.html.admin_students.cumulative.cumulative_info]</th>
+                    <th class="bold">~[text:psx.html.admin_students.cumulative.value]</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>~[x:cumulativeinfo]
+                    <td class="bold">[title]</td>
+                    <td>[data]</td>
+                </tr>
+                </tbody>
+            </table>
+            [else#secCumInfo]
+            <p align="center"><strong>YOU DO NOT HAVE ACCESS TO CUMULATIVE INFO</strong></p>
+            [/if#secCumInfo]
+        </div>
+    </div>
+
+
+    <div class="portlet" id="testScores">
+        <div class="portlet-header">PowerSchool Test Scores</div>
+        <div class="portlet-content">
+            ~[if#secTests.~(studentscreenaccess;testlist.html)=1]
+            ~(f.variable_create;name=testid;type=TEXT;when=NEVER)
+            ~(f.variable_set;name=testid;value=~[gpv:studenttestid])
+
+            <table class="linkDescList">
+                <thead>
+                <tr>
+                    <th class="bold">~[text:psx.html.admin_students.testlist.test]</th>
+                    <th class="bold">~[text:psx.html.admin_students.testlist.test_date]</th>
+                    <th class="bold">~[text:psx.html.admin_students.testlist.grade_level]</th>
+                    <th class="bold">~[text:psx.html.admin_students.testlist.description]</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>~[tlist;studenttest;studentid=~(curstudid);alternatecolor;nonemessage=<center>~[text]psx.html.admin_students.testlist.noresults,param:~(studentname)[/text]</center>;sortcmd;test_date;&gt;]
+                    <td><a href="cd4.html?studenttestid=~(id)&frn=~(studentfrn)">~([86]name)</a></td>
+                    <td>~(test_date)</td>
+                    <td>~(grade_level)</td>
+                    <td>~([86]description)</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <!-- Display Clicked Selected Test Results - Code created by Matt Freund -->
+            ~[if#scores.~(v.testid)=][else#scores]
+            <hr>
+            <table class="linkDescList">
+                <tbody>
+                <tr>
+                    <td class="bold">Test</td>
+                    <td>[test]</td>
+                </tr>
+                <tr>
+                    <td class="bold">Date</td>
+                    <td>[testdate]</td>
+                </tr>
+                <tr>
+                    <td class="bold">Term</td>
+                    <td>~([13]name)</td>
+                </tr>
+                <tr>
+                    <td class="bold">Grade Level</td>
+                    <td>[gradelevel]</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <table class="linkDescList">
+                <thead>
+                <tr>
+                    <th class="bold">Score</th>
+                    <th class="bold">Number</th>
+                    <th class="bold">Percent</th>
+                    <th class="bold">Alpha</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    ~[x:test_loadstudenttest]
+                    <td class="bold">[score]</td>
+                    <td>[numvalue]</td>
+                    <td>[pctvalue]</td>
+                    <td>[strvalue]</td>
+                </tr>
+                </tbody>
+            </table>
+            [/if#scores]
+
+            [else#secTests]
+            <p align="center"><strong>YOU DO NOT HAVE ACCESS TO TEST SCORES</strong></p>
+            [/if#secTests]
+        </div>
+    </div>
+
+    <!-- DELETE THIS LINE AND THE COMMENT LINE BELOW THE DIV TO TURN ON THE 'OLD' GRADUATION PROGRESS SCREEN
+
+       <div class="portlet" id="gradProgress">
+           <div class="portlet-header">Graduation Progress</div>
+           <div class="portlet-content">
+           ~[if#secGradProgress.~(studentscreenaccess;graduationcheck.html)=1]
+               <table border="0" cellspacing="0" cellpadding="4">
+               <tr>
+               <td align="right">~[text:psx.html.admin_students.graduationcheck.graduation_requirement_set]<select name="[01]GradReqSetID" special="lists.gradreqset" onchange="this.form.submit()"><option></select></td>
+               </tr>
+               </table>
+               <br>
+
+               <table border="0" cellspacing="0" cellpadding="4" align="center">
+               <tr bgcolor="#f6f6f6">
+               <td class="bold">~[text:psx.html.admin_students.graduationcheck.requirement]</td>
+               <td class="bold">~[text:psx.html.admin_students.graduationcheck.req]</td>
+               <td class="bold">~[text:psx.html.admin_students.graduationcheck.completed]</td>
+               <td class="bold">~[text:psx.html.admin_students.graduationcheck.current]</td>
+               <td class="bold">~[text:psx.html.admin_students.graduationcheck.needed]</td>
+               <td>&nbsp;</td>
+               </tr>
+               <tr bgcolor="#edf3fe">~[gradcheck]
+               <td>[name]</td>
+               <td>[hoursrequired]</td>
+               <td>[completed]</td>
+               <td>[enrolled]</td>
+               <td>[status]</td>
+               <td>&nbsp;</td>
+               </tr>
+           [else#secGradProgress]
+               <p align="center"><strong>YOU DO NOT HAVE ACCESS TO GRADUATION PROGRESS</strong></p>
+           [/if#secGradProgress]
+           </div>
+       </div>
+
+   THIS IS THE OTHER LINE TO REMOVE TO TURN ON GRADUATION PROGRESS -->
+
+    <div class="portlet" id="netAccess">
+        <div class="portlet-header">Net Access</div>
+        <div class="portlet-content">
+            ~[if#secNetAccess.~(studentscreenaccess;parentaccess.html)=1]
+            ~[brij_render:admin-accountmanagement-pkg;:RenderParentNetAccessReport]
+            [else#secNetAccess]
+            <p align="center"><strong>YOU DO NOT HAVE ACCESS TO NET ACCESS</strong></p>
+            [/if#secNetAccess]
+        </div>
+    </div>
+
+
+    <div class="portlet" id="allEnrollments">
+        <div class="portlet-header">All Enrollments</div>
+        <div class="portlet-content">
+            ~[if#secEnroll.~(studentscreenaccess;allenrollments.html)=1]
+
+            <table class="tableToGrid" border="0" cellspacing="0" cellpadding="4" >
+                <thead>
+                <tr bgcolor="#f6f6f6">
+                    <th class="bold">~[text:psx.html.admin_students.allenrollments.school]</th>
+                    <th class="bold">~[text:psx.html.admin_students.allenrollments.term]</th>
+                    <th class="bold" data-sorttype="date" data-sortorder="desc">~[text:psx.html.admin_students.allenrollments.entered]</th>
+                    <th class="bold" data-sorttype="date">~[text:psx.html.admin_students.allenrollments.exited]</th>
+                    <th class="bold">~[text:psx.html.admin_students.allenrollments.exp]</th>
+                    <th class="bold">~[text:psx.html.admin_students.allenrollments.course]</th>
+                    <th class="bold">~[text:psx.html.admin_students.allenrollments.teacher]</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr bgcolor="#edf3fe">
+                    <td>[schoolabbr]</td>
+                    <td>[termabbr]</td>
+                    <td>[dateenrolled]</td>
+                    <td>[dateleft]</td>
+                    <td>[classexpression]</td>
+                    <td>[coursename]</td>
+                    <td>[teachername]</td>
+                </tr>
+                ~[x:ENR_AllEnrollmentsView]
+                </tbody>
+            </table>
+
+            [else#secEnroll]
+            <p align="center"><strong>YOU DO NOT HAVE ACCESS TO ALL ENROLLMENTS</strong></p>
+            [/if#secEnroll]
+        </div>
+    </div>
+
+
+</div> <!-- CLOSE LEFT COLUMN -->
+
+<!-- THERE ARE 2 COLUMN DIVs TO CREATE THE TWO COLUMNS.-->
+<div class="column" id="rightColumn">
+
+    <div class="portlet" id="currentSchedule">
+        <div class="portlet-header">Current Schedule</div>
+        <div class="portlet-content">
+            ~[if#secSchedule.~(studentscreenaccess;schedulelist.html)=1]
+            <table class="linkDescList">
+                <thead>
+                <tr>
+                    <th class="bold">~[text:psx.html.admin_students.schedulelist.exp]</th>
+                    <th class="bold">~[text:psx.html.admin_students.schedulelist.trm]</th>
+                    <th class="bold">~[text:psx.html.admin_students.schedulelist.crssec]</th>
+                    <th class="bold">~[text:psx.html.admin_students.schedulelist.course_name]</th>
+                    <th class="bold">~[text:psx.html.admin_students.schedulelist.teacher]</th>
+                    <th class="bold">~[text:psx.html.admin_students.schedulelist.room]</th>
+                    <th class="bold">~[text:psx.html.admin_students.schedulelist.enroll]</th>
+                    <th class="bold">~[text:psx.html.admin_students.schedulelist.leave]</th>
+                </tr>
+                </thead>
+                <tbody>
+                ~[tlist_sql;select CC.Expression,
+                Terms.Abbreviation, Sections.TermID, Sections.SchoolID,
+                Sections.Course_Number, Sections.Section_Number, Sections.ID,
+                Courses.Course_Name, Teachers.LastFirst,
+                Sections.Room, CC.DateEnrolled, CC.DateLeft
+                from CC, Sections, Teachers, Courses, Terms
+                where ABS(CC.SectionID) = Sections.ID
+                and Sections.Teacher = Teachers.ID
+                and lower(Courses.Course_Number) = lower(Sections.Course_Number)
+                and Terms.ID = Sections.TermID and Terms.SchoolID = Sections.SchoolID
+                ;alternatecolor;currentschedule]
+                <tr>
+                    <td>~(CC.Expression;t;externalExpression)</td>
+                    <td>~(Terms.Abbreviation;t)<!-- ~(Sections.TermID;l) ~(Sections.SchoolID;l) --></td>
+                    <td>~(Sections.Course_Number;t)-~(Sections.Section_Number;t)<!-- ~(Sections.ID;l) --></td>
+                    <td>~(Courses.Course_Name;t;codemap=CourseName;id=~(Sections.Course_Number;t))</td>
+                    <td>~(Teachers.LastFirst;t)</td>
+                    <td>~(Sections.Room;t)</td>
+                    <td>~(CC.DateEnrolled;d)</td>
+                    <td>~(CC.DateLeft;d)</td>
+                </tr>
+                [/tlist_sql]
+                </tbody>
+            </table>
+            [else#secSchedule]
+            <p align="center"><strong>YOU DO NOT HAVE ACCESS TO LIST SCHEDULE</strong></p>
+            [/if#secSchedule]
+        </div>
+    </div>
+
+    <div class="portlet" id="historicalGrades">
+        <div class="portlet-header">Historical Grades</div>
+        <div class="portlet-content">
+            ~[if#secHistGrades.~(studentscreenaccess;previousgrades.html)=1]
+
+            <table class="grid">
+                <tr>~[x:transcript]
+                    <th class="left">~[text:psx.html.admin_students.previousgrades.yearterm]</th>
+                    <th>~[text:psx.html.admin_students.previousgrades.grd_lvl]</th>
+                    <th class="left">~[text:psx.html.admin_students.previousgrades.course_number]</th>
+                    <th class="left">~[text:psx.html.admin_students.previousgrades.course]</th>
+                    <th>~[text:psx.html.admin_students.previousgrades.earned_credit]</th>
+                    <th>[storecode]</th>
+                </tr>
+                <tr>
+                    <td>~(abbryearterm)</td>
+                    <td class="center">~(grade_level)</td>
+                    <td>~(course_number)</td>
+                    <td>~(course_name)</td>
+                    <td class="center">[totalearnedcredit]</td>
+                    <td class="center">[lettergrade]</td>
+                </tr>
+            </table>
+
+            [else#secHistGrades]
+            <p align="center"><strong>YOU DO NOT HAVE ACCESS TO HISTORICAL GRADES</strong></p>
+            [/if#secHistGrades]
+        </div>
+    </div>
+
+</div> <!-- CLOSE RIGHT COLUMN -->
+
+
+<!-- HISTORIC GRADUATION PLANNER -->
+
+<div class="box-round" id="gradPlan">
+
+    <div class="portlet" id="gradPlanPortlet">
+        <div class="portlet-header">Historic Graduation Plan Progress</div>
+        <div class="portlet-content">
+
+            ~[if#secGradPlan.~(studentscreenaccess;graduationcheck.html)=1]
+
+            <script>
+                modAccess = ~[if#ma.modaccess] true [else#ma] false [/if#ma];
+                loadingDialog();
+            </script>
+            <form action="/admin/students/graduationcheck.html" method="POST" >
+	<span data-ng-cloak>
+		<!-- start of content and bounding box -->
+
+		~[SetPostValue:studentId=~(curstudid)]
+		~[SetPostValue:flattenTranscript=true]
+		~[brij_renderform:academicplanner-pkg;:GraduationProgressContents]
+
+        <!-- end of content of bounding box -->
+	</span>
+            </form>
+
+            <div id="waiverDialogContent" class="hide">
+                <form >
+                    <div id="feedbackMarker">
+                        <div id="feedback-message"></div>
+                        <div id="feedback-error" class="feedback-error" data-ng-show="studentWaiverCtrlData.errorMessage !=''"><span ng-bind="studentWaiverCtrlData.errorMessage"></span></div>
+                    </div>
+                    <fieldset>
+                        <div><p class="label">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.plan]</p><span>{{studentWaiverCtrlData.selectedProg.planName}}</span></div>
+                        <div><p class="label">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.subject_group]</p><span>{{studentWaiverCtrlData.selectedProg.subjectGroup}}</span></div>
+                        <div><p class="label">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.path]</p><span>{{studentWaiverCtrlData.selectedProg.path}}</span></div>
+                        <div><label for="waiver_type">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.waiver_type]</label><select id="waiver_type" class="required" data-ng-model="studentWaiverCtrlData.selectedWaiverType" data-ng-options="type.name for type in studentWaiverCtrlData.waiverType track by type.id"><option value=""></option></select></div>
+                        <div><label for="reason">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.waiver_reason]</label><select id="reason" data-ng-model="studentWaiverCtrlData.selectedWaiverReason" data-ng-options="reason.name for reason in studentWaiverCtrlData.waiverReason track by reason.id"><option value=""></option></select></div>
+                        <div><label for="source">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.waiver_source]</label><select id="source" data-ng-model="studentWaiverCtrlData.selectedWaiverSource" data-ng-options="source.name for source in studentWaiverCtrlData.waiverSource track by source.id"><option value=""></option></select></div>
+                        <div><label for="elective_subject_group">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.elective_subject_group]</label><select id="elective_subject_group"  class="required" data-ng-model="studentWaiverCtrlData.selectedElective" data-ng-options="elective.subjectGroup for elective in studentWaiverCtrlData.electiveSubjectGroups track by elective.id"><option value=""></option></select></div>
+                        <div><label for="waiver_date">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.waiver_date]</label><span><input id="waiver_date"  type="text" class="required psDateWidget" data-ng-model="studentWaiverCtrlData.waived_date"/></span></div>
+                        <div><label for="credits_waived">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.credits_waived]</label><input id="credits_waived"  type="text" class="required" data-validation='{"type": "number", "required": "true", "minValue": ".00001", "maxValue": "{{studentWaiverCtrlData.selectedProg.requiredCredits}}", "maxlength": 6  }' data-ng-model="studentWaiverCtrlData.credits_waived"/></div>
+                        <div><label for="input_authorized_by">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.authorized_by]</label><span pss-auto-complete data-data="studentWaiverCtrlData.activeUsers" id="authorized_by" data-placeholder="studentWaiverCtrlData.i18nText.who_authorized_this_waiver" data-not-found-text="studentWaiverCtrlData.i18nText.no_users_found"  data-key="lastfirst" data-return-model="studentWaiverCtrlData.authorized_by" data-required="true"></span></div>
+                    </fieldset>
+                </form>
+            </div>
+            <div id="waiverDialogContentTestGroups" class="hide">
+                <form >
+                    <div id="test_group_feedbackMarker">
+                        <div id="feedback-message"></div>
+                        <div id="feedback-error" class="feedback-error" data-ng-show="studentWaiverCtrlData.errorMessage !=''"><span ng-bind="studentWaiverCtrlData.errorMessage"></span></div>
+                    </div>
+                    <fieldset id="test_group_fieldset">
+                        <div><p class="label">~[text:psx.html.admin_powerschedule_students.GraduationProgress.plan]</p><span>{{studentWaiverCtrlData.selectedProg.planName}}</span></div>
+                        <div><p class="label">~[text:psx.html.admin_powerschedule_students.GraduationProgress.test_group]</p><span>{{studentWaiverCtrlData.selectedProg.subjectGroup}}</span></div>
+                        <div><p class="label">~[text:psx.html.admin_powerschedule_students.GraduationProgress.path]</p><span>{{studentWaiverCtrlData.selectedProg.path}}</span></div>
+                        <div><label for="waiver_type">~[text:psx.html.admin_powerschedule_students.GraduationProgress.waiver_type]</label><select id="test_group_waiver_type" class="required" data-ng-model="studentWaiverCtrlData.selectedWaiverType" data-ng-options="type.name for type in studentWaiverCtrlData.waiverType track by type.id"><option value=""></option></select></div>
+                        <div><label for="reason">~[text:psx.html.admin_powerschedule_students.GraduationProgress.waiver_reason]</label><select id="test_group_reason" data-ng-model="studentWaiverCtrlData.selectedWaiverReason" data-ng-options="reason.name for reason in studentWaiverCtrlData.waiverReason track by reason.id"><option value=""></option></select></div>
+                        <div><label for="source">~[text:psx.html.admin_powerschedule_students.GraduationProgress.waiver_source]</label><select id="test_group_source" data-ng-model="studentWaiverCtrlData.selectedWaiverSource" data-ng-options="source.name for source in studentWaiverCtrlData.waiverSource track by source.id"><option value=""></option></select></div>
+                        <div><label for="waiver_date">~[text:psx.html.admin_powerschedule_students.GraduationProgress.waiver_date]</label><span><input id="test_group_waiver_date"  type="text" class="required psDateWidget" data-ng-model="studentWaiverCtrlData.waived_date"/></span></div>
+                        <div><label for="input_authorized_by">~[text:psx.html.admin_powerschedule_students.GraduationProgress.authorized_by]</label><span pss-auto-complete data-data="studentWaiverCtrlData.activeUsers" id="test_group_authorized_by" data-placeholder="studentWaiverCtrlData.i18nText.who_authorized_this_waiver" data-not-found-text="studentWaiverCtrlData.i18nText.no_users_found"  data-key="lastfirst" data-return-model="studentWaiverCtrlData.authorized_by" data-required="true"></span></div>
+                    </fieldset>
+                </form>
+            </div>
+            <div id="waiverTestDialogContent" class="hide">
+                <form >
+                    <div id="feedbackMarker">
+                        <div id="feedback-message"></div>
+                        <div id="feedback-error" class="feedback-error" data-ng-show="studentWaiverCtrlData.errorMessage !=''"><span ng-bind="studentWaiverCtrlData.errorMessage"></span></div>
+                    </div>
+                    <fieldset>
+                        <div><p class="label">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.test_name]</p><span>{{studentWaiverCtrlData.selectedTestName}}</span></div>
+                        <div><label for="test_waiver_type">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.waiver_type]</label><select id="test_waiver_type" class="required" data-ng-model="studentWaiverCtrlData.selectedWaiverType" data-ng-options="type.name for type in studentWaiverCtrlData.waiverType track by type.id"><option value=""></option></select></div>
+                        <div><label for="test_reason">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.waiver_reason]</label><select id="test_reason" data-ng-model="studentWaiverCtrlData.selectedWaiverReason" data-ng-options="reason.name for reason in studentWaiverCtrlData.waiverReason track by reason.id"><option value=""></option></select></div>
+                        <div><label for="test_source">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.waiver_source]</label><select id="test_source" data-ng-model="studentWaiverCtrlData.selectedWaiverSource" data-ng-options="source.name for source in studentWaiverCtrlData.waiverSource track by source.id"><option value=""></option></select></div>
+                        <div><label for="test_waiver_date">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.waiver_date]</label><span><input id="test_waiver_date"  type="text" class="required psDateWidget" data-ng-model="studentWaiverCtrlData.waived_date"/></span></div>
+                        <div><label for="input_test_authorized_by">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.authorized_by]</label><span pss-auto-complete data-data="studentWaiverCtrlData.activeUsers" id="test_authorized_by" data-placeholder="studentWaiverCtrlData.i18nText.who_authorized_this_waiver" data-not-found-text="studentWaiverCtrlData.i18nText.no_users_found"  data-key="lastfirst" data-return-model="studentWaiverCtrlData.authorized_by" data-required="true"></span></div>
+                    </fieldset>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+[else#secGradPlan]
+<p align="center"><strong>YOU DO NOT HAVE ACCESS TO GRAD PLANNER</strong></p>
+[/if#secGradPlan]
+
+</div>
+
+<!-- end of content of bounding box -->
+
+
+<script>
+
+    $j(document).ready(function(){
+        $j('span[id*=waiver_btn]').hide();
+        $j('#student_detail_header').append('<p class="label" style="float: right;font-weight: 800">DOB: ~([STUDENTS]DOB)</p>')
+    });
+
+</script>
+
+~[wc:admin_footer_frame_css]
+
+</body>
+</html><!-- end right frame -->

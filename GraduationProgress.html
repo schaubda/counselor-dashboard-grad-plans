@@ -1,0 +1,160 @@
+
+<!DOCTYPE html>
+<html>
+<!-- start right frame -->
+<head>
+    <title>~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.historic_graduation_plan_progress] - ~(studentname)</title>
+    ~[wc:UI_js_includes]
+    ~[wc:commonscripts]
+
+    <link rel="stylesheet" type="text/css" href="/scripts/AcademicPlanner.css"/>
+    <link href="/images/css/screen.css" rel="stylesheet" media="screen">
+    <link href="/images/css/print.css" rel="stylesheet" media="print">
+
+    ~[get_js_texts:psx.js.scripts.commonscripts.]
+    <script type="text/javascript" src="/scripts/commonscripts.js"></script>
+    ~[wc:get_js_texts_div_popup]
+
+
+</head>
+
+<body data-ng-controller="studentWaiverController"
+      data-require-path="components/gradplanner/index,components/widgets/psAutoComplete/index"
+      data-module-name="gradPlannerModule,widgets" >
+<script>
+    modAccess = ~[if.modaccess] true [else] false [/if];
+    loadingDialog();
+</script>
+
+~[wc:admin_header_frame_css]<!-- breadcrumb start --><a href="/admin/home.html" target="_top">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.start_page]</a> &gt; <a href="/admin/students/home.html?selectstudent=nosearch" target="_top">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.student_selection]</a> &gt;~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.historic_graduation_plan_progress1]<!-- breadcrumb end -->~[wc:admin_navigation_frame_css]
+<span data-ng-cloak>
+~[wc:title_student_begin_css]~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.historic_graduation_plan_progress2]~[wc:title_student_end_css]
+	~[if.student.has.both.plans]
+		<div class="button-row">
+			<a href="/admin/students/GraduationPlanner/GradPlanProgress.html?frn=~(studentfrn)"
+               id="viewAdvancedPlanBtn"
+               class="button">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.view_advanced_plans]</a>
+		</div>
+	[/if]
+<form action="/admin/students/graduationcheck.html" method="POST" >
+	<!-- start of content and bounding box -->
+
+		~[SetPostValue:studentId=~(curstudid)]
+		~[SetPostValue:flattenTranscript=true]
+		~[brij_renderform:academicplanner-pkg;:GraduationProgressContents]
+
+    <!-- This button must be placed OUTSIDE the above closing form tag or madness will ensue when the button is clicked. -->
+		<div id="downloadButton" class="button-row">
+			<pss-export-vidget data-pss-vidget>
+				<pss-export-option-vidget
+                        vidget-source="powerquery"
+                        config-data="/ws/schema/query/com.powerschool.core.graduation_planner.student_waiver_with_config",
+                        config-filename="waiverreport.csv",
+                        config-media-type="csv",
+                        config-server-side="true",
+                        config-column-include-keys="schoolname,lastfirst,student_number,nodename,waivertype,waiversource,waiverreason,waiveddate",
+                        config-column-headers="~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.school_name],~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.student_name],~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.student_number],~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.node_name],~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.type],~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.source],~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.reason],~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.date]",
+                        config-column-formatters="waiveddate:date",
+                        config-payload='{"$q":"students.id==~(curstudid)"}',
+                        menu-name="~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.comma_separated_value]"
+                        menu-short-name="~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.csv]"
+                        menu-sort-order="1"
+                        menu-option-html-id="csvOption2Id"
+                        menu-header="~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.download_waiver_report]" />
+				<pss-export-option-vidget
+                        vidget-source="powerquery"
+                        config-data="/ws/schema/query/com.powerschool.core.graduation_planner.student_waiver_with_config",
+                        config-filename="waiverreport.xlsx",
+                        config-media-type="excel",
+                        config-server-side="true",
+                        config-column-include-keys="schoolname,lastfirst,student_number,nodename,waivertype,waiversource,waiverreason,waiveddate",
+                        config-column-headers="~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.school_name],~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.student_name],~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.student_number],~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.node_name],~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.type],~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.source],~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.reason],~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.date]",
+                        config-column-formatters="waiveddate:date",
+                        config-payload='{"$q":"students.id==~(curstudid)"}',
+                        menu-name="~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.excel_spreadsheet]"
+                        menu-short-name="~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.xlsx]"
+                        menu-sort-order="2"
+                        menu-option-html-id="excelOptionId"
+                        menu-header="~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.download_waiver_report]" />
+				<pss-export-option-vidget
+                        vidget-source="powerquery"
+                        config-data="/ws/schema/query/com.powerschool.core.graduation_planner.student_waiver_with_config",
+                        config-filename="waiverreport.pdf",
+                        config-media-type="pdf",
+                        config-server-side="true",
+                        config-column-include-keys="schoolname,lastfirst,student_number,nodename,waivertype,waiversource,waiverreason,waiveddate",
+                        config-column-headers="~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.school_name],~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.student_name],~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.student_number],~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.node_name],~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.type],~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.source],~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.reason],~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.date]",
+                        config-column-formatters="waiveddate:date",
+                        config-template="studentrecord",
+                        config-template-title="~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.waiver_report] | ~[displaypref:districtname] | ~(termname)",
+                        config-payload='{"$q":"students.id==~(curstudid)"}',
+                        menu-name="~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.portable_document_format]"
+                        menu-short-name="~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.pdf]"
+                        menu-sort-order="3"
+                        menu-option-html-id="pdfOptionId"
+                        menu-header="~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.download_waiver_report]" />
+			</pss-export-vidget>
+		</div>
+    <!-- end of content of bounding box -->
+<div id="legend"></div>
+</span>
+
+</form>
+~[wc:admin_footer_frame_css]
+
+<div id="waiverDialogContent" class="hide">
+    <form >
+        <div id="feedbackMarker">
+            <div id="feedback-message"></div>
+            <div id="feedback-error" class="feedback-error" data-ng-show="studentWaiverCtrlData.errorMessage !=''"><span ng-bind="studentWaiverCtrlData.errorMessage"></span></div>
+        </div>
+        <fieldset>
+            <div><p class="label">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.plan]</p><span>{{studentWaiverCtrlData.selectedProg.planName}}</span></div>
+            <div><p class="label">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.subject_group]</p><span>{{studentWaiverCtrlData.selectedProg.subjectGroup}}</span></div>
+            <div><p class="label">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.path]</p><span>{{studentWaiverCtrlData.selectedProg.path}}</span></div>
+            <div><label for="waiver_type">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.waiver_type]</label><select id="waiver_type" class="required" data-ng-model="studentWaiverCtrlData.selectedWaiverType" data-ng-options="type.name for type in studentWaiverCtrlData.waiverType track by type.id"><option value=""></option></select></div>
+            <div><label for="reason">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.waiver_reason]</label><select id="reason" data-ng-model="studentWaiverCtrlData.selectedWaiverReason" data-ng-options="reason.name for reason in studentWaiverCtrlData.waiverReason track by reason.id"><option value=""></option></select></div>
+            <div><label for="source">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.waiver_source]</label><select id="source" data-ng-model="studentWaiverCtrlData.selectedWaiverSource" data-ng-options="source.name for source in studentWaiverCtrlData.waiverSource track by source.id"><option value=""></option></select></div>
+            <div><label for="elective_subject_group">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.elective_subject_group]</label><select id="elective_subject_group"  class="required" data-ng-model="studentWaiverCtrlData.selectedElective" data-ng-options="elective.subjectGroup for elective in studentWaiverCtrlData.electiveSubjectGroups track by elective.id"><option value=""></option></select></div>
+            <div><label for="waiver_date">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.waiver_date]</label><span><input id="waiver_date"  type="text" class="required psDateWidget" data-ng-model="studentWaiverCtrlData.waived_date"/></span></div>
+            <div><label for="credits_waived">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.credits_waived]</label><input id="credits_waived"  type="text" class="required" data-validation='{"type": "number", "required": "true", "minValue": ".00001", "maxValue": "{{studentWaiverCtrlData.selectedProg.requiredCredits}}", "maxlength": 6  }' data-ng-model="studentWaiverCtrlData.credits_waived"/></div>
+            <div><label for="input_authorized_by">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.authorized_by]</label><span pss-auto-complete data-data="studentWaiverCtrlData.activeUsers" id="authorized_by" data-placeholder="studentWaiverCtrlData.i18nText.who_authorized_this_waiver" data-not-found-text="studentWaiverCtrlData.i18nText.no_users_found"  data-key="lastfirst" data-return-model="studentWaiverCtrlData.authorized_by" data-required="true"></span></div>
+        </fieldset>
+    </form>
+</div>
+<div id="waiverDialogContentTestGroups" class="hide">
+    <form >
+        <div id="test_group_feedbackMarker">
+            <div id="feedback-message"></div>
+            <div id="feedback-error" class="feedback-error" data-ng-show="studentWaiverCtrlData.errorMessage !=''"><span ng-bind="studentWaiverCtrlData.errorMessage"></span></div>
+        </div>
+        <fieldset id="test_group_fieldset">
+            <div><p class="label">~[text:psx.html.admin_powerschedule_students.GraduationProgress.plan]</p><span>{{studentWaiverCtrlData.selectedProg.planName}}</span></div>
+            <div><p class="label">~[text:psx.html.admin_powerschedule_students.GraduationProgress.test_group]</p><span>{{studentWaiverCtrlData.selectedProg.subjectGroup}}</span></div>
+            <div><p class="label">~[text:psx.html.admin_powerschedule_students.GraduationProgress.path]</p><span>{{studentWaiverCtrlData.selectedProg.path}}</span></div>
+            <div><label for="waiver_type">~[text:psx.html.admin_powerschedule_students.GraduationProgress.waiver_type]</label><select id="test_group_waiver_type" class="required" data-ng-model="studentWaiverCtrlData.selectedWaiverType" data-ng-options="type.name for type in studentWaiverCtrlData.waiverType track by type.id"><option value=""></option></select></div>
+            <div><label for="reason">~[text:psx.html.admin_powerschedule_students.GraduationProgress.waiver_reason]</label><select id="test_group_reason" data-ng-model="studentWaiverCtrlData.selectedWaiverReason" data-ng-options="reason.name for reason in studentWaiverCtrlData.waiverReason track by reason.id"><option value=""></option></select></div>
+            <div><label for="source">~[text:psx.html.admin_powerschedule_students.GraduationProgress.waiver_source]</label><select id="test_group_source" data-ng-model="studentWaiverCtrlData.selectedWaiverSource" data-ng-options="source.name for source in studentWaiverCtrlData.waiverSource track by source.id"><option value=""></option></select></div>
+            <div><label for="waiver_date">~[text:psx.html.admin_powerschedule_students.GraduationProgress.waiver_date]</label><span><input id="test_group_waiver_date"  type="text" class="required psDateWidget" data-ng-model="studentWaiverCtrlData.waived_date"/></span></div>
+            <div><label for="input_authorized_by">~[text:psx.html.admin_powerschedule_students.GraduationProgress.authorized_by]</label><span pss-auto-complete data-data="studentWaiverCtrlData.activeUsers" id="test_group_authorized_by" data-placeholder="studentWaiverCtrlData.i18nText.who_authorized_this_waiver" data-not-found-text="studentWaiverCtrlData.i18nText.no_users_found"  data-key="lastfirst" data-return-model="studentWaiverCtrlData.authorized_by" data-required="true"></span></div>
+        </fieldset>
+    </form>
+</div>
+<div id="waiverTestDialogContent" class="hide">
+    <form >
+        <div id="feedbackMarker">
+            <div id="feedback-message"></div>
+            <div id="feedback-error" class="feedback-error" data-ng-show="studentWaiverCtrlData.errorMessage !=''"><span ng-bind="studentWaiverCtrlData.errorMessage"></span></div>
+        </div>
+        <fieldset>
+            <div><p class="label">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.test_name]</p><span>{{studentWaiverCtrlData.selectedTestName}}</span></div>
+            <div><label for="test_waiver_type">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.waiver_type]</label><select id="test_waiver_type" class="required" data-ng-model="studentWaiverCtrlData.selectedWaiverType" data-ng-options="type.name for type in studentWaiverCtrlData.waiverType track by type.id"><option value=""></option></select></div>
+            <div><label for="test_reason">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.waiver_reason]</label><select id="test_reason" data-ng-model="studentWaiverCtrlData.selectedWaiverReason" data-ng-options="reason.name for reason in studentWaiverCtrlData.waiverReason track by reason.id"><option value=""></option></select></div>
+            <div><label for="test_source">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.waiver_source]</label><select id="test_source" data-ng-model="studentWaiverCtrlData.selectedWaiverSource" data-ng-options="source.name for source in studentWaiverCtrlData.waiverSource track by source.id"><option value=""></option></select></div>
+            <div><label for="test_waiver_date">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.waiver_date]</label><span><input id="test_waiver_date"  type="text" class="required psDateWidget" data-ng-model="studentWaiverCtrlData.waived_date"/></span></div>
+            <div><label for="input_test_authorized_by">~[text:psx.html.admin_students_GraduationPlanner.GraduationProgress.authorized_by]</label><span pss-auto-complete data-data="studentWaiverCtrlData.activeUsers" id="test_authorized_by" data-placeholder="studentWaiverCtrlData.i18nText.who_authorized_this_waiver" data-not-found-text="studentWaiverCtrlData.i18nText.no_users_found"  data-key="lastfirst" data-return-model="studentWaiverCtrlData.authorized_by" data-required="true"></span></div>
+        </fieldset>
+    </form>
+</div>
+</body>
+</html><!-- end right frame -->

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<permission_mappings>
+    <permission name="/admin/students/GraduationPlanner/GraduationProgress.html">
+        <implies allow="post">/ws/schema/query/net.tcaps.counselor_dash.grad_plan.type</implies>
+    </permission>
+</permission_mappings>

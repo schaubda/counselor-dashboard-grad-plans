@@ -1,0 +1,26 @@
+<!-- TCAPS Grad Progress start -->
+<div class="hidden" id="tcaps-grad-plan-settings">
+    <table>
+        <tr id="grad-plan-settings-row">
+            <td style="width: 50%">
+                <label for="display-pref">Show Advanced or Historic Graduation Plan on the Counselor Dashboard when a
+                                          student has both</label>
+            </td>
+            <td>
+                <select name="[prefschool]tcaps_cd_show_adv_plan" id="display-pref">
+                    <option value="1">Advanced</option>
+                    <option value="0">Historic</option>
+                </select>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<script type="text/javascript">
+    $j(function ()
+       {
+           $j('.oddRow').after($j('#grad-plan-settings-row'));
+           $j('#tcaps-grad-plan-settings').remove();
+       });
+</script>
+<!-- TCAPS Grad Progress end -->
